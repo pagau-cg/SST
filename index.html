@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="fr-CA" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>SST CG</title>
+<style>
+html{color-scheme:light}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout : rail de navigation à gauche (bandeau défilant sur téléphone), contenu opérationnel à droite, tiroir de détail pour un constat. Charte Somtech. */
+:root{
+  /* jetons Somtech, mode jour */
+  --pine:#4C7334; --pine-2:#618E43; --pine-soft:#EEF2EB;
+  --amber:#D97706; --amber-deep:#B45309;
+  --concrete:#F9FAFB; --surface:#FFFFFF; --surface-2:#F3F4F6;
+  --ink:#111827; --muted:#6B7280; --line:#E5E7EB; --line-strong:#D1D5DB;
+  --ok:#15803D; --warn:#B45309; --bad:#B91C1C;
+  --radius:12px;
+  /* alias internes */
+  --bg:var(--concrete); --accent:var(--pine); --accent-ink:#FFFFFF; --accent-soft:var(--pine-soft);
+  --crit:var(--bad); --neutral:var(--muted); --stripe:var(--amber);
+  --f-display:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --pine:#A6D083; --pine-2:#8FBF6E; --pine-soft:#1D2A16;
+  --amber:#FCD34D; --amber-deep:#FCD34D;
+  --concrete:#0F1115; --surface:#171A1F; --surface-2:#1F242B;
+  --ink:#F3F4F6; --muted:#9CA3AF; --line:#2A2F37; --line-strong:#3A414B;
+  --ok:#4ADE80; --warn:#FCD34D; --bad:#F87171; --accent-ink:#0F1115; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --pine:#A6D083; --pine-2:#8FBF6E; --pine-soft:#1D2A16;
+  --amber:#FCD34D; --amber-deep:#FCD34D;
+  --concrete:#0F1115; --surface:#171A1F; --surface-2:#1F242B;
+  --ink:#F3F4F6; --muted:#9CA3AF; --line:#2A2F37; --line-strong:#3A414B;
+  --ok:#4ADE80; --warn:#FCD34D; --bad:#F87171; --accent-ink:#0F1115; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.45;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:800}
+h3{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+/* bandeau prototype */
+.proto{background:repeating-linear-gradient(-45deg,var(--stripe) 0 10px,var(--ink) 10px 20px);height:5px}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--muted)}
+.brand .tool{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand h1{font-size:21px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:6px 16px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot)}
+.seg .m-q{--dot:var(--pine)} .seg .m-s{--dot:var(--amber)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px color-mix(in srgb,var(--ink) 12%,transparent)}
+.seg button:focus-visible{outline:2px solid var(--accent)}
+.mini{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:4px}
+.mini i{display:block;height:100%;background:var(--pine)}
+.seg.plain button::before{display:none}
+.seg.plain button{padding:4px 12px}
+a{color:var(--accent)}
+.sig{display:flex;gap:6px;flex-wrap:wrap}
+.proto-tag{font-size:11px;font-weight:600;color:var(--amber-deep);background:color-mix(in srgb,var(--amber) 14%,transparent);border-radius:999px;padding:2px 8px}
+.ctl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+select,input[type=text],input[type=date],textarea{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px;min-width:0}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--muted)}
+
+.app{display:grid;grid-template-columns:210px minmax(0,1fr);min-height:calc(100% - 70px)}
+nav.side{background:var(--surface);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+nav.side .grp{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:12px 10px 4px}
+nav.side button{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:var(--r);font-weight:500}
+nav.side button:hover{background:var(--surface-2)}
+nav.side button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav.side button:focus-visible{outline:2px solid var(--accent)}
+.count{font-family:var(--f-mono);font-size:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 7px;color:var(--muted)}
+.count.hot{background:var(--crit);border-color:var(--crit);color:var(--surface)}
+
+main{padding-block:22px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0;display:flex;flex-direction:column;gap:18px;max-width:1240px;width:100%}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.head p{margin:4px 0 0;color:var(--muted);max-width:68ch}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.panel>.tbl-wrap{border-radius:var(--radius)}
+.btn{border-color:var(--line-strong)}
+.btn.primary:hover{background:var(--pine-2);border-color:var(--pine-2);filter:none}
+.panel>h3{margin-bottom:12px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:2fr 1fr}
+
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-family:var(--f-display);font-size:32px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:13px;color:var(--muted)}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi.bad .v{color:var(--crit)}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;
+  background:color-mix(in srgb,var(--c,var(--neutral)) 14%,transparent);color:var(--c,var(--neutral))}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.c-crit{--c:var(--crit)} .c-warn{--c:var(--warn)} .c-ok{--c:var(--ok)} .c-acc{--c:var(--accent)} .c-neu{--c:var(--neutral)}
+.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--surface-2)}
+td.sev{width:4px;padding:0}
+td.sev span{display:block;width:4px;min-height:38px;height:100%;background:var(--c)}
+.late{color:var(--crit);font-weight:600}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 34px;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:14px;background:var(--surface-2);border-radius:3px;display:flex;overflow:hidden}
+.bar .track i{display:block;height:100%}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;margin-top:10px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-right:5px;vertical-align:-1px}
+
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start}
+.li:last-child{border-bottom:0}
+.li .when{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+
+/* tiroir */
+.scrim{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 35%,transparent);z-index:20}
+aside.drawer{position:fixed;top:0;right:0;bottom:0;width:min(540px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;overflow-y:auto;
+  padding:calc(18px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(30px + env(safe-area-inset-bottom,0px)) 20px;display:flex;flex-direction:column;gap:16px}
+.dhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dhead h2{font-size:20px;margin-top:6px}
+.meta{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 12px;font-size:13px}
+.meta dt{color:var(--muted)} .meta dd{margin:0}
+.photo{border:1px dashed var(--line);border-radius:var(--r);padding:14px;color:var(--muted);font-size:13px;display:flex;gap:10px;align-items:center}
+.photo img{max-height:180px;border-radius:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.rule{font-size:13px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);border-left:3px solid var(--warn);padding:8px 10px;border-radius:0 4px 4px 0}
+.why{display:flex;flex-direction:column;gap:6px}
+.why label{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:center;font-size:13px}
+.why label span{font-family:var(--f-mono);color:var(--muted)}
+.journal{font-size:13px;display:flex;flex-direction:column;gap:6px}
+.journal div{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px}
+
+/* synchro */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.step{border:1px solid var(--line);border-radius:var(--r);padding:12px;background:var(--surface-2);font-size:13px;display:flex;flex-direction:column;gap:4px}
+.step b{font-family:var(--f-display);font-size:14px}
+.step.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.step .n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.form-card{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
+.form-card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.form-card li{display:flex;justify-content:space-between;gap:10px}
+.yes{color:var(--ok);font-weight:600} .no{color:var(--crit);font-weight:600}
+
+/* compétences */
+.mx td,.mx th{text-align:center;white-space:nowrap}
+.mx td:first-child,.mx th:first-child{text-align:left}
+.cell{display:inline-block;min-width:64px;padding:3px 6px;border-radius:4px;font-family:var(--f-mono);font-size:12px}
+.cell.ok{background:color-mix(in srgb,var(--ok) 13%,transparent);color:var(--ok)}
+.cell.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.cell.bad{background:color-mix(in srgb,var(--crit) 15%,transparent);color:var(--crit);font-weight:600}
+.cell.none{color:var(--muted)}
+
+.alert{display:flex;gap:12px;align-items:flex-start;border:1px solid color-mix(in srgb,var(--crit) 45%,var(--line));background:color-mix(in srgb,var(--crit) 7%,var(--surface));border-radius:8px;padding:12px 14px;font-size:13px}
+.alert b{display:block;font-size:14px}
+.lock{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:36px 16px;color:var(--muted)}
+.lock b{color:var(--ink);font-size:15px}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs button{all:unset;cursor:pointer;padding:8px 12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--accent);border-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent)}
+
+/* modal */
+.modal{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 24px));max-height:calc(100% - 24px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.modal form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.modal label.full{grid-column:1/-1}
+.modal .foot{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.scrim.m{z-index:30}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:40;font-weight:500;max-width:calc(100% - 32px)}
+
+/* notes pour Somtech */
+.dev{display:none;font-family:var(--f-mono);font-size:12px;line-height:1.5;background:var(--accent-soft);color:var(--ink);border:1px dashed var(--accent);border-radius:var(--r);padding:8px 10px}
+.dev::before{content:"SOMTECH  ";color:var(--accent);font-weight:500;letter-spacing:.06em}
+body.dev-on .dev{display:block}
+
+.fab{display:none}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav.side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px max(12px,env(safe-area-inset-left,0px))}
+  nav.side .grp{display:none}
+  nav.side button{white-space:nowrap;gap:8px}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g2,.g3{grid-template-columns:minmax(0,1fr)}
+  .flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  .brand small{display:none}
+  .hide-sm{display:none}
+  .fab{display:inline-flex;position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;padding:12px 16px;border-radius:999px;box-shadow:0 4px 14px color-mix(in srgb,var(--ink) 30%,transparent)}
+  .modal form{grid-template-columns:minmax(0,1fr)}
+  .meta{grid-template-columns:minmax(0,1fr)} .meta dt{margin-top:6px}
+  .bar{grid-template-columns:minmax(0,1fr) 34px} .bar .track{grid-column:1/-1;grid-row:2}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="proto" aria-hidden="true"></div>
+<header class="top">
+  <div class="brand">
+    <div class="crumb"><svg width="16" height="17" viewBox="0 0 22 24" aria-hidden="true"><polygon points="11,1 21,6 11,11 1,6" fill="#8BC47B"/><polygon points="1,6 11,11 11,23 1,18" fill="#618E43"/><polygon points="21,6 11,11 11,23 21,18" fill="#4C7334"/></svg>Construction Gauthier · Opérations<span aria-hidden="true" style="margin:0 2px">›</span><span style="color:var(--ink);font-weight:600">SST</span></div>
+    <div class="tool"><h1>Santé et sécurité</h1><span class="proto-tag" title="Rien n'est enregistré">Maquette · données fictives</span></div><div class="muted" style="font-size:13px">Écarts, événements, compétences et équipements, tous projets confondus.</div>
+  </div>
+  <button class="btn hide-sm" data-act="theme" id="themebtn">Mode nuit</button>
+  <label class="ctl" for="role">Vue de <select id="role"></select></label>
+  <label class="toggle hide-sm" for="devmode"><input type="checkbox" id="devmode"> Notes pour Somtech</label>
+  <button class="btn primary hide-sm" data-act="new">+ Nouveau constat</button>
+</header>
+<div class="app">
+  <nav class="side" id="nav" aria-label="Sections"></nav>
+  <main id="main"></main>
+</div>
+<button class="btn primary fab" data-act="new">+ Constat</button>
+<div id="layer"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ---------- utilitaires ---------- */
+const DAY=864e5, T0=new Date(); T0.setHours(0,0,0,0);
+const d=n=>new Date(T0.getTime()+n*DAY);
+const fmt=dt=>dt?dt.toLocaleDateString('fr-CA',{day:'numeric',month:'short'}):'';
+const days=(a,b)=>Math.round((a-b)/DAY);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const nowHM=()=>new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});
+
+/* ---------- données fictives ---------- */
+const PROJ={
+  '26-061':{nom:'Clinique médicale Jonquière',acc:'CLIN-JQ'},
+  '26-074':{nom:'Entrepôt Laterrière',acc:'ENTR-LAT'},
+  '26-082':{nom:'Résidence Chicoutimi-Nord',acc:'RES-CN'}
+};
+const PEOPLE={
+  jt:{nom:'J. Tremblay',role:'Contremaître'},
+  mb:{nom:'M. Bouchard',role:'Contremaître'},
+  sg:{nom:'S. Gagnon',role:'Surintendant'},
+  al:{nom:'A. Lavoie',role:'Coordonnatrice CQ'},
+  ps:{nom:'P. Simard',role:'Coordonnateur SST'},
+  dir:{nom:'Direction',role:'Direction'}
+};
+const ROLES=['jt','sg','al','ps','dir'];
+const ST={
+  elb:{nom:'Électricité Boréale',lot:'Électricité',docs:{CNESST:120,RBQ:300,Assurances:25}},
+  csn:{nom:'Coffrages Saguenay Nord',lot:'Béton',docs:{CNESST:-4,RBQ:200,Assurances:160}},
+  ika:{nom:'Isolation Kénogami',lot:'Coupe-feu et isolation',docs:{CNESST:60,RBQ:410,Assurances:90}},
+  plb:{nom:'Plomberie Lac-Bleu',lot:'Mécanique',docs:{CNESST:200,RBQ:45,Assurances:220}},
+  tva:{nom:'Échafaudages Valin',lot:'Échafaudage',docs:{CNESST:30,RBQ:null,Assurances:15}}
+};
+const TYPES={nc:{l:'NC qualité',c:'c-acc'},def:{l:'Déficience',c:'c-neu'},sst:{l:'Écart SST',c:'c-warn'},pa:{l:'Presque-accident',c:'c-crit'},obs:{l:'Observation positive',c:'c-ok'}};
+const GRAV={mineure:{l:'Mineure',c:'var(--neutral)',k:'c-neu',delai:7},majeure:{l:'Majeure',c:'var(--warn)',k:'c-warn',delai:3},critique:{l:'Critique',c:'var(--crit)',k:'c-crit',delai:1}};
+const STAT={ouverte:{l:'Ouverte',c:'c-crit'},encours:{l:'En cours',c:'c-warn'},averifier:{l:'À vérifier',c:'c-acc'},fermee:{l:'Fermée',c:'c-ok'}};
+
+/* Deux espaces, un seul moteur : la famille découle du type */
+const FAM={q:['nc','def'],s:['sst','pa','obs']};
+const famOf=t=>FAM.q.includes(t)?'q':'s';
+const gabFam=g=>/^PIE/.test(g)?'q':'s';
+const DISC=['Étude de code','Excavation','Bétonnage','Enveloppe','Coupe-feu','MEP','Mise en service','Réception'];
+const PIEP={
+  '26-061':[[3,3],[5,5],[8,6],[6,2],[7,1],[12,3],[4,0],[2,0]],
+  '26-074':[[2,2],[4,4],[5,5],[6,3],[2,0],[8,1],[3,0],[2,0]],
+  '26-082':[[4,4],[3,3],[9,9],[8,5],[10,4],[14,6],[5,0],[2,0]]
+};
+const CODE={'26-061':['Coupe-feu','Accès universel','Alarme-incendie'],'26-074':['Coupe-feu','Alarme-incendie'],'26-082':['Coupe-feu','Cages d\'escalier','Accès universel','Alarme-incendie']};
+const C=(o)=>Object.assign({causes:['','','','',''],six:['','','','','',''],causeMode:'5p',mi:'',cout:{h:0,mat:0,refact:false},abonnes:[],eff:null,journal:[],photo:null},o);
+let constats=[
+  C({id:'C-0131',type:'def',projet:'26-061',lot:'Électricité',grav:'mineure',titre:'Plaques de prises manquantes, corridor 2e étage',origine:'ACC Issues',cree:d(-12),auteur:'al',resp:'elb',ech:d(-2),statut:'encours'}),
+  C({id:'C-0134',type:'nc',projet:'26-082',lot:'Coupe-feu et isolation',grav:'majeure',titre:'Scellement coupe-feu incomplet, traversée de gaine électrique, local 214',origine:'ACC Forms · PIE Coupe-feu',cree:d(-9),auteur:'al',resp:'ika',ech:d(-5),statut:'ouverte'}),
+  C({id:'C-0135',type:'sst',projet:'26-074',lot:'Échafaudage',grav:'critique',titre:'Échafaudage sans étiquette d\'inspection, façade nord',origine:'ACC Forms · Inspection SST hebdo',cree:d(-8),auteur:'jt',resp:'tva',ech:d(-7),statut:'fermee',fermePar:'ps',fermeLe:d(-7)}),
+  C({id:'C-0137',type:'pa',projet:'26-074',lot:'Général',grav:'majeure',titre:'Outil échappé du 3e étage, zone sous-jacente balisée',origine:'Saisie directe (mobile)',cree:d(-7),auteur:'mb',resp:'sg',ech:d(-4),statut:'averifier'}),
+  C({id:'C-0138',type:'nc',projet:'26-061',lot:'Béton',grav:'majeure',titre:'Enrobage d\'armature insuffisant, dalle niveau 1, axe C',origine:'ACC Forms · PIE Bétonnage',cree:d(-15),auteur:'al',resp:'csn',ech:d(-12),statut:'fermee',fermePar:'al',fermeLe:d(-11),
+    causes:['Chaises d\'armature écrasées à plusieurs endroits','Circulation des travailleurs sur l\'armature avant bétonnage','Pas de passerelle prévue pour la circulation','Séquence de pose non revue avec le coffreur','Point d\'arrêt PIE fait trop tôt, avant la fin de la pose']}),
+  C({id:'C-0140',type:'def',projet:'26-082',lot:'Mécanique',grav:'mineure',titre:'Isolant de conduite endommagé, chambre mécanique',origine:'ACC Issues',cree:d(-5),auteur:'al',resp:'plb',ech:d(2),statut:'encours'}),
+  C({id:'C-0141',type:'sst',projet:'26-082',lot:'Général',grav:'critique',titre:'Garde-corps retiré sans remplacement, ouverture de plancher niveau 3',origine:'ACC Forms · Inspection SST hebdo',cree:d(-4),auteur:'mb',resp:'mb',ech:d(-3),statut:'ouverte'}),
+  C({id:'C-0143',type:'obs',projet:'26-061',lot:'Général',grav:'mineure',titre:'Très bon ordre et propreté, aire d\'entreposage',origine:'Saisie directe (mobile)',cree:d(-3),auteur:'ps',resp:null,ech:null,statut:'fermee',fermePar:'ps',fermeLe:d(-3)}),
+  C({id:'C-0144',type:'nc',projet:'26-074',lot:'Électricité',grav:'mineure',titre:'Hauteur des boîtiers non conforme au plan, mur ligne 4',origine:'ACC Issues',cree:d(-2),auteur:'al',resp:'elb',ech:d(5),statut:'ouverte'}),
+  C({id:'C-0145',type:'sst',projet:'26-061',lot:'Général',grav:'mineure',titre:'Extincteur de la roulotte non inspecté depuis 30 jours',origine:'ACC Forms · Inspection SST hebdo',cree:d(-2),auteur:'jt',resp:'jt',ech:d(5),statut:'averifier'}),
+  C({id:'C-0146',type:'def',projet:'26-082',lot:'Coupe-feu et isolation',grav:'majeure',titre:'Joint de gypse coupe-feu non scellé, cage d\'escalier B',origine:'ACC Forms · PIE Coupe-feu',cree:d(-1),auteur:'al',resp:'ika',ech:d(2),statut:'ouverte'}),
+  C({id:'C-0147',type:'nc',projet:'26-061',lot:'Mécanique',grav:'mineure',titre:'Pente de drain sous la norme, salle de bain 104',origine:'ACC Issues',cree:d(-1),auteur:'al',resp:'plb',ech:d(6),statut:'encours'})
+];
+constats.forEach(c=>{c.journal.push({t:fmt(c.cree),txt:'Créé par '+who(c.auteur)+' ('+c.origine+')'});
+  if(c.statut==='fermee'&&c.fermePar)c.journal.push({t:fmt(c.fermeLe),txt:'Fermeture validée par '+who(c.fermePar)});});
+(function(){const g=id=>constats.find(c=>c.id===id);
+  Object.assign(g('C-0138'),{mi:'Bétonnage arrêté sur l\'axe C, chaises réajustées par le coffreur',cout:{h:14,mat:620,refact:true},abonnes:['sg','al'],
+    six:['Circulation des travailleurs sur l\'armature','Séquence de pose non revue','Chaises trop basses pour la charge','','Accès restreint au coin nord','Point d\'arrêt fait avant la fin de la pose']});
+  Object.assign(g('C-0134'),{mi:'Zone balisée, fermeture du mur suspendue',abonnes:['sg']});
+  Object.assign(g('C-0141'),{mi:'Ouverture barricadée temporairement par le contremaître',abonnes:['sg','ps']});
+  Object.assign(g('C-0135'),{mi:'Accès à l\'échafaudage interdit jusqu\'à l\'inspection',cout:{h:3,mat:0,refact:true},abonnes:['ps']});
+  Object.assign(g('C-0146'),{abonnes:['sg']});
+})();
+let seq=148;
+
+const MAP=[
+  {gab:'Inspection SST hebdo',champ:'Garde-corps en place aux ouvertures',nc:'Non',type:'sst',grav:'critique',disc:'SST'},
+  {gab:'Inspection SST hebdo',champ:'Échafaudages étiquetés',nc:'Non',type:'sst',grav:'majeure',disc:'SST'},
+  {gab:'Inspection SST hebdo',champ:'Extincteurs inspectés',nc:'Non',type:'sst',grav:'mineure',disc:'SST'},
+  {gab:'Inspection SST hebdo',champ:'Port des ÉPI',nc:'Non',type:'sst',grav:'majeure',disc:'SST'},
+  {gab:'Inspection SST hebdo',champ:'Ordre et propreté',nc:'Non',type:'sst',grav:'mineure',disc:'SST'},
+  {gab:'PIE Coupe-feu · Scellements',champ:'Traversées électriques scellées',nc:'Non',type:'nc',grav:'majeure',disc:'Coupe-feu'},
+  {gab:'PIE Coupe-feu · Scellements',champ:'Étiquetage des systèmes homologués',nc:'Non',type:'nc',grav:'mineure',disc:'Coupe-feu'},
+  {gab:'PIE Coupe-feu · Scellements',champ:'Photos avant fermeture',nc:'Non',type:'nc',grav:'mineure',disc:'Coupe-feu'},
+  {gab:'PIE Bétonnage',champ:'Enrobage conforme',nc:'Non',type:'nc',grav:'majeure',disc:'Bétonnage'},
+  {gab:'PIE Bétonnage',champ:'Rapport de labo reçu',nc:'Non',type:'nc',grav:'mineure',disc:'Bétonnage'}
+];
+let unknownField={gab:'Inspection échafaudages v3',champ:'Ancrages vérifiés',open:true};
+
+let pending=[
+  {acc:'FRM-8841',gab:'Inspection SST hebdo',projet:'26-074',par:'jt',heure:'15:52',items:[['Garde-corps en place aux ouvertures',false,null,'Ouverture du monte-charge, niveau 2'],['Échafaudages étiquetés',false,'tva','Tour d\'échafaudage côté est'],['Extincteurs inspectés',true],['Ordre et propreté',true],['Port des ÉPI',true]]},
+  {acc:'FRM-8843',gab:'PIE Coupe-feu · Scellements',projet:'26-082',par:'al',heure:'16:05',items:[['Traversées électriques scellées',false,'ika','Local 318, 3 traversées sans scellant'],['Étiquetage des systèmes homologués',true],['Photos avant fermeture',true]]}
+];
+let synced=[
+  {acc:'FRM-8830',gab:'Pause sécurité',projet:'26-061',par:'jt',heure:'08:15',crees:0},
+  {acc:'FRM-8835',gab:'PIE Bétonnage',projet:'26-074',par:'al',heure:'11:40',crees:0},
+  {acc:'FRM-8838',gab:'Inspection SST hebdo',projet:'26-061',par:'jt',heure:'14:10',crees:1}
+];
+let inspSST={faites:14,prevues:18};
+
+const EMP=['J. Tremblay','M. Bouchard','É. Côté','K. Girard','L. Fortin','D. Harvey','N. Savard','R. Boivin'];
+const FORM=['ASP Construction','Secourisme','Nacelle','Chariot élévateur','Travail en hauteur','Espace clos','Signaleur'];
+const MX=[
+  ['P',400,220,null,500,40,null],['P',35,600,300,150,null,null],['P','-20',null,700,400,null,900],['P',500,-12,null,260,null,null],
+  ['P',180,90,50,null,300,null],['P',null,410,380,610,null,120],['P',720,null,null,55,null,400],['P',300,150,-3,480,210,null]
+].map(r=>r.map(v=>v===null||v==='P'?v:Number(v)));
+
+const ARRETS=[
+  {j:2,projet:'26-082',quoi:'Scellements coupe-feu niveau 3, avant fermeture des murs',etat:'Prêt',k:'c-ok'},
+  {j:4,projet:'26-061',quoi:'Armature dalle niveau 2, avant bétonnage',etat:'Labo à confirmer',k:'c-warn'},
+  {j:9,projet:'26-074',quoi:'Pare-vapeur de toiture, avant pose de l\'isolant',etat:'Prêt',k:'c-ok'},
+  {j:12,projet:'26-082',quoi:'Essai d\'étanchéité des fenêtres, façade est',etat:'À planifier',k:'c-crit'}
+];
+const EVTS=[
+  {id:'E-024',date:d(-26),projet:'26-074',type:'Accident avec perte de temps',desc:'Entorse à la cheville en descendant d\'un échafaudage',enq:'Complétée',mes:'Échelles d\'accès intégrées exigées sur toutes les tours'},
+  {id:'E-026',date:d(-9),projet:'26-061',type:'Premiers soins',desc:'Coupure mineure à la main pendant la manipulation de tôle',enq:'Complétée',mes:'Gants anti-coupure obligatoires pour la tôle'},
+  {id:'E-027',date:d(-7),projet:'26-074',type:'Presque-accident',desc:'Outil échappé du 3e étage, personne dans la zone',enq:'En cours',mes:'Voir constat C-0137'}
+];
+const PAUSES=[
+  {date:d(-1),projet:'26-074',sujet:'Travail près des ouvertures de plancher',anim:'J. Tremblay',pres:14,prev:16},
+  {date:d(-1),projet:'26-082',sujet:'Cadenassage des équipements temporaires',anim:'M. Bouchard',pres:11,prev:11},
+  {date:d(-8),projet:'26-061',sujet:'Manipulation de tôle et ÉPI',anim:'J. Tremblay',pres:9,prev:10},
+  {date:d(-8),projet:'26-074',sujet:'Inspection quotidienne des échafaudages',anim:'J. Tremblay',pres:15,prev:16}
+];
+const HEURES=48300, PERTE_TEMPS=1;
+const TAUX=85;
+const SIXM=['Main-d\'œuvre','Méthode','Matériel','Matière','Milieu','Mesure'];
+Object.assign(EVTS[0],{temoins:['M. Bouchard'],sig:{'Employé':true,'Contremaître':true,'Coordonnateur SST':true},cnesst:'Transmise',
+  causes:['Descente face à l\'extérieur de la tour','Accès par les traverses, pas d\'échelle intégrée','Tour louée sans échelle d\'accès','Exigence absente du bon de commande']});
+Object.assign(EVTS[1],{temoins:[],sig:{'Employé':true,'Contremaître':true,'Coordonnateur SST':true},cnesst:'Non requise, inscrit au registre',
+  causes:['Gants de travail standards, non anti-coupure','Aucune exigence pour la tôle au programme de prévention']});
+Object.assign(EVTS[2],{temoins:['J. Tremblay','K. Girard'],sig:{'Employé':true,'Contremaître':true,'Coordonnateur SST':false},cnesst:'Non requise',causes:[]});
+const DEM=[
+  {id:'D-012',fam:'q',titre:'Gabarit de pose des boîtiers électriques à hauteur fixe',type:'Amélioration',origine:'Proposée par le terrain',projet:'26-074',lien:'C-0144',resp:'al',ech:d(10),statut:'Plan d\'action',plan:'Tester le gabarit sur 26-074, puis l\'ajouter au devis type des électriciens'},
+  {id:'D-010',fam:'q',titre:'Passerelle de circulation obligatoire sur l\'armature avant bétonnage',type:'Action corrective',origine:'NC récurrente',projet:'26-061',lien:'C-0138',resp:'sg',ech:d(-2),statut:'Évaluation de l\'efficacité',plan:'Passerelle ajoutée à la liste de vérification avant bétonnage du PIE'},
+  {id:'D-014',fam:'q',titre:'Procédure de scellement coupe-feu : photos avant fermeture obligatoires',type:'Approbation de document',origine:'Audit A-007',projet:'26-082',lien:null,resp:'dir',ech:d(4),statut:'À approuver',plan:'Révision 3 de la procédure, à approuver par la direction'},
+  {id:'D-015',fam:'s',titre:'Exiger une échelle d\'accès intégrée sur toutes les tours d\'échafaudage louées',type:'Action corrective',origine:'Événement E-024',projet:'26-074',lien:null,resp:'ps',ech:d(-6),statut:'Fermée',plan:'Clause ajoutée aux bons de commande de location'},
+  {id:'D-016',fam:'s',titre:'Ajouter le point « Ancrages vérifiés » à l\'inspection d\'échafaudages',type:'Modification de formulaire',origine:'Proposée par le terrain',projet:'26-082',lien:null,resp:'ps',ech:d(3),statut:'En cours',plan:'Modifier le gabarit dans ACC, puis le relier dans Gabarits ACC'},
+  {id:'D-017',fam:'s',titre:'Trousse de démarrage de chantier : FDS à recueillir auprès des sous-traitants',type:'Amélioration',origine:'Proposée par le coordonnateur SST',projet:'26-082',lien:null,resp:'ps',ech:d(15),statut:'Soumise',plan:'À définir'}
+];
+const DSTAT={'Soumise':'c-neu','Plan d\'action':'c-warn','En cours':'c-warn','Évaluation de l\'efficacité':'c-acc','À approuver':'c-acc','Fermée':'c-ok'};
+const AUD=[
+  {id:'A-007',fam:'q',titre:'Audit PIE coupe-feu',projet:'26-082',date:d(-6),aud:'al',portee:'Scellements des niveaux 2 et 3',ref:'PIE Coupe-feu, devis section 07 84 00',pts:24,conf:21,constats:['C-0134','C-0146'],concl:'Conforme avec réserves',statut:'Rapport émis'},
+  {id:'A-008',fam:'q',titre:'Audit du dossier qualité de fin de projet',projet:'26-061',date:d(9),aud:'al',portee:'Dossier de réception',ref:'Plan qualité 26-061',pts:null,statut:'Planifié'},
+  {id:'A-005',fam:'s',titre:'Audit SST de chantier',projet:'26-074',date:d(-12),aud:'ps',portee:'Programme de prévention, échafaudages, ouvertures',ref:'Code de sécurité pour les travaux de construction',pts:32,conf:27,constats:['C-0135','C-0137'],concl:'Conforme avec réserves',statut:'Rapport émis'},
+  {id:'A-009',fam:'s',titre:'Audit SST de chantier',projet:'26-082',date:d(5),aud:'ps',portee:'Ouvertures de plancher, cadenassage',ref:'Code de sécurité pour les travaux de construction',pts:null,statut:'Planifié'}
+];
+const EQ=[
+  {id:'EQ-031',nom:'Détecteur 4 gaz',serie:'DG-22871',projet:'26-082',resp:'mb',exig:'Étalonnage',freq:180,prochain:d(-2)},
+  {id:'EQ-052',nom:'Extincteurs des roulottes (4)',serie:'·',projet:'26-061',resp:'jt',exig:'Inspection mensuelle',freq:30,prochain:d(9)},
+  {id:'EQ-007',nom:'Niveau laser rotatif',serie:'NL-4410',projet:'26-074',resp:'jt',exig:'Étalonnage',freq:365,prochain:d(12)},
+  {id:'EQ-018',nom:'Harnais antichute (lot de 6)',serie:'HA-L06',projet:'26-074',resp:'jt',exig:'Inspection par une personne compétente',freq:365,prochain:d(40)},
+  {id:'EQ-044',nom:'Nacelle articulée 45 pi (location)',serie:'Location',projet:'26-074',resp:'sg',exig:'Inspection annuelle du loueur',freq:365,prochain:d(75)}
+];
+const FDS=[
+  {prod:'Scellant coupe-feu intumescent',st:'ika',projet:'26-082',etat:'Reçue'},
+  {prod:'Mousse de polyuréthane',st:'ika',projet:'26-082',etat:'À obtenir'},
+  {prod:'Apprêt pour béton à base de solvant',st:'csn',projet:'26-061',etat:'Reçue'},
+  {prod:'Colle à tuyau PVC',st:'plb',projet:'26-061',etat:'Reçue'},
+  {prod:'Décapant pour coffrage',st:'csn',projet:'26-074',etat:'À obtenir'}
+];
+const SES=[
+  {date:d(-20),titre:'Travail en hauteur',org:'Formateur externe (fictif)',duree:'8 h',cout:900,part:['N. Savard','L. Fortin','J. Tremblay'],statut:'Complétée',eval:'4,5 / 5'},
+  {date:d(14),titre:'Secourisme en milieu de travail',org:'Organisme reconnu (fictif)',duree:'16 h',cout:1200,part:['É. Côté','M. Bouchard'],statut:'Planifiée',eval:null},
+  {date:d(30),titre:'Nacelle élévatrice',org:'À choisir',duree:'4 h',cout:450,part:['K. Girard'],statut:'Inscription à faire',eval:null}
+];
+const CRIT=['Qualité d\'exécution','Respect de l\'échéancier','Santé et sécurité','Collaboration','Gestion des déficiences'];
+let EVALS={csn:{date:d(-40),moy:3.4,par:'sg',com:'Bonne exécution, enrobage à surveiller'}};
+const costOf=c=>c.cout.h*TAUX+(+c.cout.mat||0);
+const costTxt=c=>costOf(c).toLocaleString('fr-CA')+' $'+(c.cout.refact?' · refacturable':'');
+
+/* ---------- état ---------- */
+const S={view:'tableau',role:'jt',mod:'s',compTab:'mx',evtOpen:null,evalST:null,open:null,f:{projet:'',type:'',statut:'ouvertes',retard:false},sstTab:'evt',syncing:false,syncStep:-1,consult:[]};
+function who(k){return k==null?'Aucun':(PEOPLE[k]?.nom||ST[k]?.nom||k)}
+const isST=k=>!!ST[k];
+const inMod=c=>famOf(c.type)===S.mod;
+const isOpen=c=>c.statut!=='fermee';
+const isLate=c=>isOpen(c)&&c.ech&&c.ech<T0;
+const escal=c=>isLate(c)&&days(T0,c.ech)>=3;
+
+/* ---------- navigation ---------- */
+const lateMod=()=>constats.filter(c=>inMod(c)&&isLate(c)).length;
+const pendMod=()=>pending.filter(f=>gabFam(f.gab)===S.mod).length;
+const VIEWS_Q=[
+  {g:'Suivi'},{k:'tableau',l:'Tableau de bord'},{k:'constats',l:'NC et déficiences',n:lateMod,hot:true},{k:'demandes',l:'Demandes'},{k:'audits',l:'Audits'},{k:'pie',l:'Plan qualité (PIE)'},
+  {g:'Terrain'},{k:'synchro',l:'Synchro ACC',n:pendMod},
+  {g:'Référentiels'},{k:'soustraitants',l:'Sous-traitants'},{k:'gabarits',l:'Gabarits ACC'}
+];
+const VIEWS_S=[
+  {g:'Suivi'},{k:'tableau',l:'Tableau de bord'},{k:'constats',l:'Écarts SST',n:lateMod,hot:true},{k:'demandes',l:'Demandes'},{k:'audits',l:'Audits'},{k:'sst',l:'Registre SST'},
+  {g:'Terrain'},{k:'synchro',l:'Synchro ACC',n:pendMod},{k:'equip',l:'Équipements',n:()=>EQ.filter(e=>e.prochain<T0).length,hot:true},
+  {g:'Référentiels'},{k:'competences',l:'Compétences'},{k:'soustraitants',l:'Sous-traitants'},{k:'gabarits',l:'Gabarits ACC',n:()=>unknownField.open?1:0}
+];
+const views=()=>S.mod==='q'?VIEWS_Q:VIEWS_S;
+function renderNav(){
+  $('#nav').innerHTML=views().map(v=>v.g?`<div class="grp">${v.g}</div>`:
+   `<button data-act="nav" data-view="${v.k}" ${S.view===v.k?'aria-current="page"':''}>${v.l}${v.n&&v.n()?`<span class="count ${v.hot?'hot':''}">${v.n()}</span>`:''}</button>`).join('');
+}
+function go(v){if(!views().some(x=>x.k===v))v='tableau';S.view=v;try{history.replaceState(null,'','#'+v)}catch(e){}render()}
+
+/* ---------- vues ---------- */
+const pillT=t=>`<span class="pill ${TYPES[t].c}">${TYPES[t].l}</span>`;
+const pillS=s=>`<span class="pill ${STAT[s].c}">${STAT[s].l}</span>`;
+const pillG=g=>`<span class="pill ${GRAV[g].k}">${GRAV[g].l}</span>`;
+const dev=t=>`<div class="dev">${t}</div>`;
+
+function bars(rows,max,cols){return `<div class="bars">${rows.map(r=>`<div class="bar"><span>${r.label}</span><span class="track">${cols.map(([k,c])=>`<i style="width:${r[k]/max*100}%;background:${c}"></i>`).join('')}</span><span class="mono">${cols.reduce((t,[k])=>t+r[k],0)}</span></div>`).join('')}</div>`}
+function stats(fam){
+  const all=constats.filter(c=>famOf(c.type)===fam);
+  const open=all.filter(c=>isOpen(c)&&c.resp), late=open.filter(isLate);
+  const closed=all.filter(c=>c.statut==='fermee'&&c.resp);
+  const avg=closed.length?closed.reduce((t,c)=>t+days(c.fermeLe,c.cree),0)/closed.length:0;
+  return{all,open,late,closed,avg};
+}
+function vTabQ(){
+  const st=stats('q');
+  const byP=Object.keys(PROJ).map(p=>({label:p+' · '+esc(PROJ[p].nom),nc:st.open.filter(c=>c.projet===p&&c.type==='nc').length,df:st.open.filter(c=>c.projet===p&&c.type==='def').length}));
+  const max=Math.max(1,...byP.map(b=>b.nc+b.df));
+  const lots={};st.open.forEach(c=>lots[c.lot]=(lots[c.lot]||0)+1);
+  const lr=Object.entries(lots).sort((a,b)=>b[1]-a[1]).map(([l,n])=>({label:esc(l),n}));
+  const lmax=Math.max(1,...lr.map(x=>x.n));
+  const arr=ARRETS.filter(a=>a.j<=14), aplan=arr.filter(a=>a.k!=='c-ok').length;
+  return `
+  <div class="head"><div><h2>Tableau de bord qualité</h2><p>Non-conformités, déficiences et points d'arrêt du PIE, sur tous les projets actifs.</p></div></div>
+  <div class="grid g4">
+    <div class="panel kpi"><span class="l">NC et déficiences ouvertes</span><span class="v">${st.open.length}</span><span class="s">${st.open.filter(c=>c.type==='nc').length} NC · ${st.open.filter(c=>c.type==='def').length} déficiences</span></div>
+    <div class="panel kpi ${st.late.length?'bad':''}"><span class="l">En retard</span><span class="v">${st.late.length}</span><span class="s">${st.late.filter(escal).length} escaladée(s) au surintendant</span></div>
+    <div class="panel kpi"><span class="l">Délai moyen de fermeture</span><span class="v">${st.avg.toFixed(1)} <small style="font-size:15px">j</small></span><span class="s">sur ${st.closed.length} fermée(s)</span></div>
+    <div class="panel kpi"><span class="l">Points d'arrêt, 14 jours</span><span class="v">${arr.length}</span><span class="s">${aplan} pas encore prêt(s)</span></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><h3>Ouvertes par projet</h3>${bars(byP,max,[['nc','var(--pine)'],['df','var(--line-strong)']])}
+      <div class="legend"><span style="--c:var(--pine)">NC qualité</span><span style="--c:var(--line-strong)">Déficiences</span></div></div>
+    <div class="panel"><h3>Ouvertes par lot</h3>${lr.length?bars(lr,lmax,[['n','var(--pine-2)']]):'<p class="muted">Aucune.</p>'}
+      <p style="margin:12px 0 0;font-size:13px">Coûts de reprise compilés : <b class="mono">${constats.filter(c=>famOf(c.type)==='q').reduce((t,c)=>t+costOf(c),0).toLocaleString('fr-CA')} $</b>, dont <b class="mono">${constats.filter(c=>famOf(c.type)==='q'&&c.cout.refact).reduce((t,c)=>t+costOf(c),0).toLocaleString('fr-CA')} $</b> refacturables.</p>
+      ${dev('Regroupement par lot = base de l\'évaluation des sous-traitants en fin de lot.')}</div>
+  </div>
+  <div class="panel"><h3>Points d'arrêt PIE à venir</h3><div class="list">
+    ${arr.map(a=>`<div class="li"><span class="when">${fmt(d(a.j))}</span><span><b>${a.projet}</b> · ${esc(a.quoi)}</span><span class="pill ${a.k}">${a.etat}</span></div>`).join('')}
+  </div>${dev('Même table constat que la SST, filtrée sur famille = qualite (types nc, def). Module distinct dans la plateforme ; il peut partager le moteur constat / action / rappels avec le module SST (décision Somtech).')}</div>`;
+}
+function vTabS(){
+  const st=stats('s');
+  const tf=(PERTE_TEMPS*200000/HEURES);
+  const pa=st.all.filter(c=>c.type==='pa').length, obs=st.all.filter(c=>c.type==='obs').length;
+  const byP=Object.keys(PROJ).map(p=>({label:p+' · '+esc(PROJ[p].nom),e:st.open.filter(c=>c.projet===p&&c.type==='sst').length,pa:st.open.filter(c=>c.projet===p&&c.type==='pa').length}));
+  const max=Math.max(1,...byP.map(b=>b.e+b.pa));
+  const exp=[];MX.forEach((r,i)=>r.forEach((v,j)=>{if(typeof v==='number'&&v<60)exp.push({e:EMP[i],f:FORM[j],v})}));exp.sort((a,b)=>a.v-b.v);
+  const pres=PAUSES.reduce((t,p)=>t+p.pres,0), prev=PAUSES.reduce((t,p)=>t+p.prev,0);
+  return `
+  <div class="head"><div><h2>Tableau de bord SST</h2><p>Écarts d'inspection, presque-accidents, événements et formations, sur tous les projets actifs.</p></div></div>
+  <div class="grid g4">
+    <div class="panel kpi"><span class="l">Écarts SST ouverts</span><span class="v">${st.open.length}</span><span class="s">${st.open.filter(c=>c.grav==='critique').length} critique(s)</span></div>
+    <div class="panel kpi ${st.late.length?'bad':''}"><span class="l">En retard</span><span class="v">${st.late.length}</span><span class="s">${st.late.filter(escal).length} escaladé(s) au surintendant</span></div>
+    <div class="panel kpi"><span class="l">Inspections SST du mois</span><span class="v">${inspSST.faites}<small style="font-size:15px" class="muted"> / ${inspSST.prevues}</small></span><span class="s">faites vs prévues</span></div>
+    <div class="panel kpi"><span class="l">Taux de fréquence</span><span class="v">${tf.toFixed(2)}</span><span class="s">${PERTE_TEMPS} perte de temps × 200 000 ÷ ${HEURES.toLocaleString('fr-CA')} h</span></div>
+  </div>
+  <div class="grid g3">
+    <div class="panel"><h3>Ouverts par projet</h3>${bars(byP,max,[['e','var(--amber)'],['pa','var(--bad)']])}
+      <div class="legend"><span style="--c:var(--amber)">Écarts d'inspection</span><span style="--c:var(--bad)">Presque-accidents</span></div>
+      ${dev('Heures : Maestro (forces propres). Événements avec perte de temps : evenement_sst.')}</div>
+    <div class="panel kpi"><span class="l">Culture de déclaration</span><span class="v">${pa+obs}</span>
+      <span class="s">${pa} presque-accident(s) et ${obs} observation(s) positive(s) déclarés. Au départ, un chiffre qui monte est bon signe.</span>
+      <span class="s" style="margin-top:8px">Présence aux pauses sécurité : <b class="mono">${Math.round(pres/prev*100)} %</b> (${pres} / ${prev})</span></div>
+  </div>
+  <div class="panel"><h3>Formations expirées ou à renouveler (60 j)</h3><div class="list">
+    ${exp.map(x=>`<div class="li"><span class="when">${x.v<0?'expirée':x.v+' j'}</span><span><b>${x.e}</b> · ${x.f}</span><span class="pill ${x.v<0?'c-crit':'c-warn'}">${x.v<0?'Expirée':'À renouveler'}</span></div>`).join('')}
+  </div>${dev('Lu de Ma Place RH, jamais saisi ici. Module distinct dans la plateforme ; il peut partager le moteur constat / action / rappels avec le module Qualité (décision Somtech).')}</div>`;
+}
+function vDem(){
+  const rows=DEM.filter(x=>x.fam===S.mod);
+  return `
+  <div class="head"><div><h2>Demandes</h2><p>Améliorations proposées par le terrain, actions correctives tirées de NC récurrentes, d'audits ou d'événements, approbations de documents. Chaque demande a un plan d'action, un responsable et une vérification d'efficacité.</p></div></div>
+  <div class="panel" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>No</th><th>Demande</th><th>Type</th><th>Origine</th><th>Responsable</th><th>Échéance</th><th>Étape</th></tr></thead><tbody>
+  ${rows.map(x=>`<tr><td class="mono">${x.id}</td><td style="min-width:240px"><div>${esc(x.titre)}</div><div class="muted" style="font-size:12px;margin-top:3px">Plan : ${esc(x.plan)}</div></td><td><span class="tag">${esc(x.type)}</span></td>
+    <td style="min-width:130px">${esc(x.origine)}${x.lien?` · <a href="#" data-act="open" data-id="${x.lien}" class="mono">${x.lien}</a>`:''}<div class="mono muted" style="font-size:12px">${x.projet}</div></td>
+    <td>${who(x.resp)}</td><td class="mono ${x.ech<T0&&x.statut!=='Fermée'?'late':''}">${fmt(x.ech)}</td><td><span class="pill ${DSTAT[x.statut]}">${x.statut}</span></td></tr>`).join('')}
+  </tbody></table></div></div>
+  ${dev('Table demande (type, origine, constat_lie, plan_action, responsable, echeance, etape). Même moteur de rappels et d\'abonnés que les actions. Une demande d\'approbation pointe vers le document dans SharePoint ou ACC Docs ; elle ne remplace pas la gestion documentaire.')}`;
+}
+function vAud(){
+  const rows=AUD.filter(a=>a.fam===S.mod).sort((a,b)=>b.date-a.date);
+  return `
+  <div class="head"><div><h2>Audits ${S.mod==='q'?'qualité':'SST'}</h2><p>La grille se remplit dans ACC Forms, sur le chantier. Ici : le programme d'audits, le rapport, la conclusion et les constats qui en découlent.</p></div></div>
+  <div class="panel" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>No</th><th>Audit</th><th>Projet</th><th>Date</th><th>Auditeur</th><th>Résultat</th><th>Constats</th><th>Statut</th></tr></thead><tbody>
+  ${rows.map(a=>`<tr><td class="mono">${a.id}</td><td style="min-width:230px"><b>${esc(a.titre)}</b><div class="muted" style="font-size:12px">Portée : ${esc(a.portee)}<br>Référentiel : ${esc(a.ref)}</div>${a.concl?`<div style="font-size:12px;margin-top:3px">Conclusion : ${esc(a.concl)}</div>`:''}</td>
+    <td class="mono">${a.projet}</td><td class="mono">${fmt(a.date)}</td><td>${who(a.aud)}</td>
+    <td style="min-width:120px">${a.pts?`<span class="mono">${a.conf} / ${a.pts} conformes</span><div class="mini"><i style="width:${a.conf/a.pts*100}%"></i></div>`:'<span class="muted">À venir</span>'}</td>
+    <td>${(a.constats||[]).map(id=>`<a href="#" data-act="open" data-id="${id}" class="mono">${id}</a>`).join('<br>')||'<span class="muted">·</span>'}</td>
+    <td><span class="pill ${a.pts?'c-ok':'c-acc'}">${a.statut}</span></td></tr>`).join('')}
+  </tbody></table></div></div>
+  ${dev('Table audit (gabarit ACC, projet, portée, référentiel, auditeur, points, conformes, conclusion). Les items non conformes de la grille ACC créent des constats par la synchro, comme une inspection. Revue de direction trimestrielle = agrégat des audits, constats et demandes, générée et commentée, pas rédigée.')}`;
+}
+function vEq(){
+  const st=e=>{const v=days(e.prochain,T0);return v<0?`<span class="pill c-crit">En retard de ${-v} j</span>`:v<14?`<span class="pill c-warn">${fmt(e.prochain)}</span>`:`<span class="pill c-ok">${fmt(e.prochain)}</span>`};
+  return `
+  <div class="head"><div><h2>Équipements et étalonnages</h2><p>Équipements de CG soumis à une inspection ou à un étalonnage. Le responsable reçoit un rappel avant l'échéance, et l'équipement suit le projet où il se trouve.</p></div></div>
+  <div class="panel" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>No</th><th>Équipement</th><th>Projet</th><th>Responsable</th><th>Exigence</th><th>Fréquence</th><th>Prochaine échéance</th><th></th></tr></thead><tbody>
+  ${EQ.slice().sort((a,b)=>a.prochain-b.prochain).map(e=>`<tr><td class="mono">${e.id}</td><td style="min-width:180px"><b>${esc(e.nom)}</b><div class="mono muted" style="font-size:12px">${esc(e.serie)}</div></td><td class="mono">${e.projet}</td><td>${who(e.resp)}</td><td>${esc(e.exig)}</td><td class="mono">${e.freq} j</td><td>${st(e)}${e.dernier?`<div class="muted" style="font-size:12px">Fait le ${fmt(e.dernier)}</div>`:''}</td>
+    <td><button class="btn" data-act="eqdone" data-id="${e.id}">Enregistrer</button></td></tr>`).join('')}
+  </tbody></table></div></div>
+  ${dev('Tables equipement + maintenance (fréquence en jours ou au compteur, certificat en pièce jointe). ACC Assets sert surtout aux équipements du bâtiment livré (mise en service), pas aux outils et instruments de CG.')}`;
+}
+function vPIE(){
+  return `
+  <div class="head"><div><h2>Plan qualité (PIE)</h2><p>Inspections faites sur prévues à ce jour, par discipline. Le plan de chaque projet est généré du PIE gabarit et des points sensibles de son étude de code.</p></div></div>
+  <div class="panel" style="padding:0"><div class="tbl-wrap"><table class="mx">
+    <thead><tr><th>Projet</th>${DISC.map(x=>`<th>${x}</th>`).join('')}</tr></thead>
+    <tbody>${Object.keys(PIEP).map(p=>`<tr><td><b>${p}</b><div class="muted" style="font-size:12px">${esc(PROJ[p].nom)}</div></td>${PIEP[p].map(([prev,fait])=>`<td><span class="mono">${fait} / ${prev}</span><div class="mini"><i style="width:${prev?fait/prev*100:0}%"></i></div></td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div></div>
+  <div class="grid g2">
+    <div class="panel"><h3>Points sensibles tirés de l'étude de code</h3><div class="list">
+      ${Object.keys(CODE).map(p=>`<div class="li" style="grid-template-columns:62px minmax(0,1fr)"><span class="when">${p}</span><span style="display:flex;gap:6px;flex-wrap:wrap">${CODE[p].map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</span></div>`).join('')}
+    </div></div>
+    <div class="panel"><h3>Points d'arrêt à venir</h3><div class="list">
+      ${ARRETS.map(a=>`<div class="li"><span class="when">${fmt(d(a.j))}</span><span><b>${a.projet}</b> · ${esc(a.quoi)}</span><span class="pill ${a.k}">${a.etat}</span></div>`).join('')}
+    </div></div>
+  </div>
+  ${dev('plan_qualite = gabarit PIE (disciplines cochées) + points sensibles de l\'étude de code. Chaque inspection prévue est reliée à une activité de l\'échéancier ; un point d\'arrêt bloque l\'activité suivante tant qu\'il n\'est pas conforme.')}`;
+}
+
+function filtered(){
+  const f=S.f;
+  return constats.filter(c=>inMod(c)&&(!f.projet||c.projet===f.projet)&&(!f.type||c.type===f.type)
+    &&(f.statut==='toutes'||(f.statut==='ouvertes'?isOpen(c):c.statut===f.statut))&&(!f.retard||isLate(c)))
+   .sort((a,b)=>(isLate(b)-isLate(a))||((a.ech||d(999))-(b.ech||d(999))));
+}
+function vConstats(){
+  const rows=filtered();
+  const o=(v,l,cur)=>`<option value="${v}" ${cur===v?'selected':''}>${l}</option>`;
+  return `
+  <div class="head"><div><h2>${S.mod==='q'?'NC et déficiences':'Écarts SST'}</h2><p>${S.mod==='q'?'Non-conformités qualité et déficiences, des points PIE, des issues ACC et de la saisie directe.':'Écarts d\'inspection, presque-accidents et observations positives.'} Chaque constat porte une action, un responsable et une échéance calculée selon la gravité.</p></div></div>
+  <div class="filters">
+    <select id="f-projet" aria-label="Projet">${o('','Tous les projets',S.f.projet)}${Object.keys(PROJ).map(p=>o(p,p+' '+PROJ[p].nom,S.f.projet)).join('')}</select>
+    <select id="f-type" aria-label="Type">${o('','Tous les types',S.f.type)}${FAM[S.mod].map(t=>o(t,TYPES[t].l,S.f.type)).join('')}</select>
+    <select id="f-statut" aria-label="Statut">${o('ouvertes','Non fermées',S.f.statut)}${o('toutes','Tous les statuts',S.f.statut)}${Object.keys(STAT).map(s=>o(s,STAT[s].l,S.f.statut)).join('')}</select>
+    <label class="toggle" for="f-retard"><input type="checkbox" id="f-retard" ${S.f.retard?'checked':''}> En retard seulement</label>
+    <span class="muted" style="margin-left:auto">${rows.length} résultat(s)</span>
+  </div>
+  <div class="panel" style="padding:0"><div class="tbl-wrap"><table>
+    <thead><tr><th></th><th>No</th><th>Constat</th><th>Projet</th><th>Responsable</th><th>Échéance</th><th>Statut</th></tr></thead>
+    <tbody>${rows.map(c=>`<tr class="click" data-act="open" data-id="${c.id}" tabindex="0">
+      <td class="sev"><span style="--c:${GRAV[c.grav].c}"></span></td>
+      <td class="mono">${c.id}</td>
+      <td style="min-width:240px"><div>${esc(c.titre)}</div><div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">${pillT(c.type)}<span class="tag">${esc(c.origine.split(' · ')[0])}</span></div></td>
+      <td class="mono">${c.projet}</td>
+      <td style="white-space:nowrap">${esc(who(c.resp))}${isST(c.resp)?' <span class="tag">ST</span>':''}</td>
+      <td style="white-space:nowrap" class="${isLate(c)?'late':''}">${c.ech?fmt(c.ech):'·'}${isLate(c)?`<div style="font-size:12px">${days(T0,c.ech)} j de retard${escal(c)?' · escaladé':''}</div>`:''}</td>
+      <td>${pillS(c.statut)}</td></tr>`).join('')||`<tr><td colspan="7" class="muted" style="padding:24px">Aucun constat pour ces filtres.</td></tr>`}</tbody>
+  </table></div></div>
+  ${dev('Bande de couleur = gravité. Tri : retards d\'abord, puis échéance. Escalade auto au surintendant à 3 j de retard (paramètre). Rappels courriel quotidiens au responsable.')}`;
+}
+
+function vSynchro(){
+  const steps=['Lecture des formulaires ACC|Forms API, formulaires modifiés depuis la dernière synchro','Rattachement au projet CG|ID projet ACC ↔ numéro de projet','Application des gabarits|Chaque réponse « Non » devient un constat','Création des actions|Responsable = sous-traitant du lot ou auteur, échéance selon gravité'];
+  const pm=pending.filter(f=>gabFam(f.gab)===S.mod), sm=synced.filter(f=>gabFam(f.gab)===S.mod);
+  return `
+  <div class="head"><div><h2>Synchro ACC</h2><p>Les contremaîtres remplissent leurs formulaires dans ACC, comme aujourd'hui. QSST les lit, puis crée les constats et les actions. Rien n'est ressaisi.</p></div>
+    <button class="btn primary" data-act="sync" ${S.syncing||!pm.length?'disabled':''}>${S.syncing?'Synchro en cours…':pm.length?'Synchroniser maintenant':'À jour'}</button></div>
+  <div class="flow">${steps.map((s,i)=>{const[a,b]=s.split('|');return`<div class="step ${S.syncStep>=i?'on':''}"><span class="n">${S.syncStep>=i?'✓ ':''}Étape ${i+1}</span><b>${a}</b><span class="muted">${b}</span></div>`}).join('')}</div>
+  <div class="grid g2">
+    <div class="panel"><h3>Nouveaux dans ACC depuis la dernière synchro (${pm.length})</h3>
+      <div style="display:flex;flex-direction:column;gap:10px">
+      ${pm.map(f=>`<div class="form-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(f.gab)}</b><span class="mono muted">${f.acc} · ${f.heure}</span></div>
+        <span class="muted" style="font-size:13px">${f.projet} ${esc(PROJ[f.projet].nom)} · rempli par ${who(f.par)}</span>
+        <ul>${f.items.map(it=>`<li><span>${esc(it[0])}</span><span class="${it[1]?'yes':'no'}">${it[1]?'Oui':'Non'}</span></li>`).join('')}</ul></div>`).join('')||'<p class="muted">Tout est synchronisé. La prochaine lecture se fera automatiquement dans 15 minutes.</p>'}
+      </div></div>
+    <div class="panel"><h3>Lus aujourd'hui</h3><div class="tbl-wrap"><table><thead><tr><th>Heure</th><th>Formulaire</th><th>Projet</th><th>Constats</th></tr></thead>
+      <tbody>${sm.map(f=>`<tr><td class="mono">${f.heure}</td><td>${esc(f.gab)}<div class="mono muted" style="font-size:12px">${f.acc} · ${who(f.par)}</div></td><td class="mono">${f.projet}</td><td class="mono">${f.crees}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+  ${dev('Pas de webhook documenté pour Forms : tâche planifiée aux 15 min (Supabase cron / Edge Function). GET des formulaires par projet ACC, filtre updatedAt > dernière synchro. JSON brut conservé dans acc_formulaire, puis application de gabarit_map. Idempotent : clé unique (acc_form_id, champ).')}`;
+}
+
+function vGabarits(){
+  const gabs=[...new Set(MAP.filter(m=>famOf(m.type)===S.mod).map(m=>m.gab))];
+  return `
+  <div class="head"><div><h2>Gabarits ACC</h2><p>La correspondance qui transforme un formulaire ACC en constat. Elle se configure ici par le département CQ, sans programmeur. Les gabarits eux-mêmes restent gérés dans ACC.</p></div></div>
+  ${unknownField.open&&S.mod==='s'?`<div class="alert"><div style="flex:1"><b>Champ non reconnu dans « ${esc(unknownField.gab)} »</b>Le champ « ${esc(unknownField.champ)} » a été ajouté dans ACC et n'est pas encore relié. Tant qu'il ne l'est pas, ses réponses « Non » ne créent aucun constat.</div><button class="btn" data-act="mapfield">Relier comme écart SST majeur</button></div>`:''}
+  ${gabs.map(g=>`<div class="panel" style="padding:0"><div style="padding:14px 16px 4px"><h3>${esc(g)}</h3></div><div class="tbl-wrap"><table>
+    <thead><tr><th>Champ du formulaire</th><th>Crée un constat si</th><th>Type</th><th>Gravité</th><th>Discipline</th></tr></thead>
+    <tbody>${MAP.map((m,i)=>m.gab!==g?'':`<tr><td>${esc(m.champ)}</td><td>Réponse « ${m.nc} »</td><td>${pillT(m.type)}</td>
+      <td><select data-map="${i}" aria-label="Gravité pour ${esc(m.champ)}">${Object.keys(GRAV).map(k=>`<option value="${k}" ${m.grav===k?'selected':''}>${GRAV[k].l}</option>`).join('')}</select></td><td>${esc(m.disc)}</td></tr>`).join('')}</tbody></table></div></div>`).join('')}
+  ${dev('Table gabarit_map (acc_template_id, field_id, valeur_nc, type, gravite, discipline). Alerte « champ inconnu » levée par la synchro quand un field_id ACC n\'existe pas dans la table.')}`;
+}
+
+function canSeeSST(){return ['ps','dir'].includes(S.role)}
+function evtDetail(e){
+  return `<div class="panel" style="margin-top:14px;background:var(--surface-2)">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px"><h3>${e.id} · Déclaration et enquête</h3><button class="btn" data-act="evt" data-id="">Fermer</button></div>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+        <div><b>Déclaration</b><div>${fmt(e.date)} · ${e.projet} · ${esc(e.type)}</div><div>${esc(e.desc)}</div></div>
+        <div><b>Témoins</b><div>${e.temoins.length?e.temoins.map(esc).join(', '):'Aucun'}</div></div>
+        <div><b>Signatures</b><div class="sig" style="margin-top:4px">${Object.entries(e.sig).map(([k,v])=>`<span class="pill ${v?'c-ok':'c-warn'}">${k}${v?'':' · en attente'}</span>`).join('')}</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+        <div><b>Enquête</b> · ${e.enq}${e.causes.length?`<ol style="margin:6px 0 0;padding-left:18px">${e.causes.map(c=>`<li>${esc(c)}</li>`).join('')}</ol>`:'<div class="muted">Analyse en cours.</div>'}</div>
+        <div><b>Mesure corrective</b><div>${esc(e.mes)}</div></div>
+        <div><b>Déclaration CNESST</b><div>${esc(e.cnesst)}</div></div>
+      </div>
+    </div></div>`;
+}
+function vSST(){
+  const tab=S.sstTab;
+  let body='';
+  if(tab==='evt'){
+    if(!canSeeSST()){body=`<div class="lock"><b>Accès restreint</b>Les déclarations d'événements contiennent des renseignements personnels et de santé. Seuls le coordonnateur SST et la direction y ont accès.<span style="font-size:12px">Change la vue en haut pour « P. Simard » pour voir le registre.</span></div>`}
+    else{
+      const k=PEOPLE[S.role].nom+' · '+nowHM();
+      if(S.consult[0]!==k)S.consult.unshift(k);
+      const open=EVTS.find(e=>e.id===S.evtOpen);
+      body=`<div class="tbl-wrap"><table><thead><tr><th>No</th><th>Date</th><th>Projet</th><th>Type</th><th>Description</th><th>Enquête</th><th>Signatures</th></tr></thead>
+      <tbody>${EVTS.map(e=>{const ns=Object.values(e.sig).filter(v=>!v).length;return`<tr class="click" data-act="evt" data-id="${e.id}" tabindex="0"><td class="mono">${e.id}</td><td class="mono">${fmt(e.date)}</td><td class="mono">${e.projet}</td><td><span class="pill ${e.type.startsWith('Accident')?'c-crit':e.type.startsWith('Presque')?'c-warn':'c-neu'}">${e.type}</span></td><td style="min-width:200px">${esc(e.desc)}</td><td>${e.enq}</td><td>${ns?`<span class="pill c-warn">${ns} en attente</span>`:'<span class="pill c-ok">Complètes</span>'}</td></tr>`}).join('')}</tbody></table></div>
+      ${open?evtDetail(open):'<p class="muted" style="font-size:12px;margin:10px 0 0">Clique sur un événement pour voir la déclaration, les témoins, les signatures et l\'enquête.</p>'}
+      <p class="muted" style="font-size:12px;margin:10px 0 0">Consultation journalisée : ${esc(S.consult.slice(0,3).join(' ; '))}</p>`;
+    }
+  } else if(tab==='pause'){
+    body=`<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Projet</th><th>Sujet</th><th>Animée par</th><th>Présents</th></tr></thead>
+    <tbody>${PAUSES.map(p=>`<tr><td class="mono">${fmt(p.date)}</td><td class="mono">${p.projet}</td><td>${esc(p.sujet)}</td><td>${p.anim}</td><td class="mono ${p.pres<p.prev?'late':''}">${p.pres} / ${p.prev}</td></tr>`).join('')}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Les présents sont cochés à partir de la liste d'affectation du jour. Un écart signale un travailleur affecté qui n'a pas assisté.</p>`;
+  } else {
+    body=`<div class="tbl-wrap"><table><thead><tr><th>Produit</th><th>Apporté par</th><th>Projet</th><th>FDS</th></tr></thead>
+    <tbody>${FDS.map(f=>`<tr><td>${esc(f.prod)}</td><td>${who(f.st)}</td><td class="mono">${f.projet}</td><td><span class="pill ${f.etat==='Reçue'?'c-ok':'c-crit'}">${f.etat}</span></td></tr>`).join('')}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Les fiches elles-mêmes sont classées dans ACC Docs (dossier SST du projet). Ici, on suit seulement qu'elles sont au chantier avant l'arrivée du produit.</p>`;
+  }
+  const tb=(k,l)=>`<button role="tab" data-act="ssttab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`;
+  return `
+  <div class="head"><div><h2>Registre SST</h2><p>Événements, enquêtes, pauses sécurité et fiches de données de sécurité. Les écarts trouvés en inspection vivent dans Écarts SST.</p></div></div>
+  <div class="panel"><div class="tabs" role="tablist">${tb('evt','Événements')}${tb('pause','Pauses sécurité')}${tb('fds','Fiches de données de sécurité')}</div>
+    <div style="padding-top:14px">${body}</div></div>
+  ${dev('Row Level Security Supabase par rôle sur evenement_sst. Chaque SELECT écrit une ligne dans journal_acces. Signatures : employé, contremaître et coordonnateur SST, horodatées. Hébergement région Canada (Loi 25). Aucune vraie donnée dans les environnements de test.')}`;
+}
+function vCompetences(){
+  const cell=v=>v==='P'?`<span class="cell ok">Permanent</span>`:v==null?`<span class="cell none">·</span>`:
+    v<0?`<span class="cell bad">Expirée</span>`:v<60?`<span class="cell warn">${fmt(d(v))}</span>`:`<span class="cell ok">${fmt(d(v))}</span>`;
+  const t=S.compTab;
+  let body='';
+  if(t==='mx'){
+    body=`<div class="tbl-wrap"><table class="mx"><thead><tr><th>Employé</th>${FORM.map(f=>`<th>${f}</th>`).join('')}</tr></thead>
+      <tbody>${EMP.map((e,i)=>`<tr><td><b>${e}</b></td>${MX[i].map(cell).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="legend"><span style="--c:var(--ok)">Valide</span><span style="--c:var(--warn)">Expire dans moins de 60 jours</span><span style="--c:var(--crit)">Expirée</span></div>`;
+  } else if(t==='preuves'){
+    const rows=[];let n=10;MX.forEach((r,i)=>r.forEach((v,j)=>{if(typeof v==='number')rows.push({id:'PREUV-0'+(n++),e:EMP[i],f:FORM[j],v,ev:(i+j)%4===0?null:d(-200-((i*37+j*11)%300))})}));
+    rows.sort((a,b)=>a.v-b.v);
+    body=`<div class="tbl-wrap"><table><thead><tr><th>No</th><th>Employé</th><th>Compétence</th><th>Expiration</th><th>Évaluation de la preuve</th><th>Preuve</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td class="mono">${r.id}</td><td>${r.e}</td><td>${r.f}</td><td class="${r.v<0?'late':''}">${fmt(d(r.v))} <span class="muted" style="font-size:12px">(${r.v<0?'expirée depuis '+(-r.v)+' j':'dans '+r.v+' j'})</span></td><td class="mono">${r.ev?fmt(r.ev):'<span class="late">Jamais</span>'}</td><td><span class="tag">Carte · Ma Place RH</span></td></tr>`).join('')}</tbody></table></div>`;
+  } else {
+    body=`<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Formation</th><th>Organisme</th><th>Durée</th><th>Coût</th><th>Participants</th><th>Statut</th><th>Évaluation</th></tr></thead>
+      <tbody>${SES.map(x=>`<tr><td class="mono">${fmt(x.date)}</td><td><b>${esc(x.titre)}</b></td><td>${esc(x.org)}</td><td class="mono">${x.duree}</td><td class="mono">${x.cout.toLocaleString('fr-CA')} $</td><td style="min-width:150px">${x.part.join(', ')}</td><td><span class="pill ${x.statut==='Complétée'?'c-ok':x.statut==='Planifiée'?'c-acc':'c-warn'}">${x.statut}</span></td><td class="mono">${x.eval||'·'}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:12px;margin:10px 0 0">Une session complétée met à jour la carte de chaque participant dans Ma Place RH.</p>`;
+  }
+  const tb=(k,l)=>`<button role="tab" data-act="comptab" data-tab="${k}" aria-selected="${t===k}">${l}</button>`;
+  return `
+  <div class="head"><div><h2>Compétences</h2><p>Qui détient quelle carte, jusqu'à quand, et les sessions de formation à venir. Les données viennent de Ma Place RH ; ici on les croise avec l'affectation.</p></div></div>
+  <div class="alert"><div><b>Conflit d'affectation, demain</b>K. Girard est affecté à « Pose de luminaires en nacelle » sur 26-074. Sa carte nacelle est expirée depuis le ${fmt(d(-12))}. Une session nacelle est prévue le ${fmt(d(30))}.</div></div>
+  <div class="panel"><div class="tabs" role="tablist">${tb('mx','Matrice')}${tb('preuves','Preuves de compétence')}${tb('ses','Sessions de formation')}</div><div style="padding-top:14px">${body}</div></div>
+  ${dev('Lecture Ma Place RH (API ou export planifié) : competence, preuve, session. À valider avec Somtech : ce que Ma Place RH expose déjà (preuves, sessions, coûts) pour ne rien dupliquer. Le module Affectation interroge competence avant de proposer un employé sur une tâche qui exige une carte.')}`;
+}
+function vST(){
+  const docCell=v=>v==null?'<span class="muted">n/a</span>':v<0?`<span class="pill c-crit">Expiré</span>`:v<30?`<span class="pill c-warn">${fmt(d(v))}</span>`:`<span class="pill c-ok">${fmt(d(v))}</span>`;
+  const rows=Object.entries(ST).map(([k,s])=>{
+    const cs=constats.filter(c=>c.resp===k&&inMod(c));
+    const score=Math.max(0,100-cs.reduce((t,c)=>t+(c.grav==='critique'?15:c.grav==='majeure'?8:4)+(isLate(c)?5:0),0));
+    return{k,s,open:cs.filter(isOpen).length,late:cs.filter(isLate).length,score};
+  });
+  const sc=v=>`<span class="mono" style="font-weight:600;color:${v>=85?'var(--ok)':v>=70?'var(--warn)':'var(--crit)'}">${v}</span>`;
+  return `
+  <div class="head"><div><h2>Sous-traitants</h2><p>Documents exigés, note calculée à partir des faits du chantier et évaluation de fin de lot. Ces notes servent au choix des invitations à soumissionner.</p></div></div>
+  <div class="panel" style="padding:0"><div class="tbl-wrap"><table>
+    <thead><tr><th>Sous-traitant</th><th>Lot</th><th>CNESST</th><th>RBQ</th><th>Assurances</th><th>Actions ouvertes</th><th>${S.mod==='q'?'Note qualité':'Note SST'}</th><th>Évaluation de fin de lot</th><th></th></tr></thead>
+    <tbody>${rows.map(r=>{const ev=EVALS[r.k];return`<tr><td><b>${r.s.nom}</b></td><td>${r.s.lot}</td><td>${docCell(r.s.docs.CNESST)}</td><td>${docCell(r.s.docs.RBQ)}</td><td>${docCell(r.s.docs.Assurances)}</td>
+      <td class="mono">${r.open}${r.late?` <span class="late">(${r.late} en retard)</span>`:''}</td><td>${sc(r.score)}</td>
+      <td>${ev?`<span class="mono" style="font-weight:600">${ev.moy.toFixed(1)} / 5</span><div class="muted" style="font-size:12px">${fmt(ev.date)} · ${who(ev.par)}${ev.com?'<br>'+esc(ev.com):''}</div>`:'<span class="muted">·</span>'}</td>
+      <td><button class="btn" data-act="eval" data-k="${r.k}">Évaluer</button></td></tr>`}).join('')}</tbody></table></div></div>
+  <p class="muted" style="font-size:12px;margin:0">Note calculée sur 100 : on retire 4, 8 ou 15 points par constat selon la gravité, et 5 de plus s'il est en retard. L'évaluation de fin de lot est faite par le surintendant ou le chargé de projet. Barème à ajuster avec les opérations.</p>
+  ${dev('Documents : table sous_traitant_doc, alerte 30 j avant expiration. Évaluation : table evaluation_st (critères, note, commentaire, auteur, lot). Portail externe (lien magique) pour que le sous-traitant voie ses actions et dépose ses preuves.')}`;
+}
+function evalModal(){
+  const s=ST[S.evalST];
+  return `<div class="scrim m" data-act="closeeval"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Évaluation de fin de lot"><h2 style="font-size:19px">Évaluation de fin de lot</h2>
+  <p class="muted" style="margin:0;font-size:13px">${esc(s.nom)} · ${esc(s.lot)}</p>
+  <form id="evalf">${CRIT.map((c,i)=>`<label for="ev-${i}">${c}<select id="ev-${i}">${[5,4,3,2,1].map(n=>`<option value="${n}" ${n===4?'selected':''}>${n} · ${['','Inacceptable','Faible','Correct','Bon','Excellent'][n]}</option>`).join('')}</select></label>`).join('')}
+  <label class="full" for="ev-com">Commentaire<textarea id="ev-com" rows="3" placeholder="À retenir pour les prochaines invitations"></textarea></label>
+  <div class="foot"><button type="button" class="btn" data-act="closeeval">Annuler</button><button type="submit" class="btn primary">Enregistrer l'évaluation</button></div></form></div>`;
+}
+
+function render(){
+  renderNav();
+  if(!views().some(x=>x.k===S.view))S.view='tableau';
+  const V={tableau:()=>S.mod==='q'?vTabQ():vTabS(),pie:vPIE,demandes:vDem,audits:vAud,equip:vEq,constats:vConstats,synchro:vSynchro,gabarits:vGabarits,sst:vSST,competences:vCompetences,soustraitants:vST};
+  $('#main').innerHTML=(V[S.view]||V.tableau)();
+  renderLayer();
+}
+
+/* ---------- tiroir ---------- */
+function transitions(c){
+  const u=S.role, r=c.resp, out=[]; let rule='';
+  if(!r)return{out,rule:'Observation positive : aucune action requise.'};
+  if(c.statut==='ouverte')out.push(['encours','Prendre en charge','']);
+  if(c.statut==='encours'){
+    if(isST(r))out.push(['averifier','Enregistrer la preuve reçue du portail','primary']);
+    else if(u===r||u==='sg'||u==='dir')out.push(['averifier','Déposer la preuve de correction','primary']);
+    else rule='Seul le responsable ou le surintendant dépose la preuve de correction.';
+  }
+  if(c.statut==='averifier'){
+    if(u===r)rule='Tu es responsable de cette action : quelqu\'un d\'autre doit valider la fermeture. Change la vue en haut pour essayer.';
+    else{out.push(['fermee','Valider la fermeture','primary']);out.push(['encours','Refuser, à reprendre',''])}
+  }
+  return{out,rule};
+}
+function drawer(c){
+  const t=transitions(c);
+  const why=c.type!=='obs';
+  return `<div class="scrim" data-act="close"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Constat ${c.id}">
+    <div class="dhead"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="mono muted">${c.id}</span>${pillT(c.type)}${pillG(c.grav)}${pillS(c.statut)}</div><h2>${esc(c.titre)}</h2></div>
+      <button class="btn" data-act="close" aria-label="Fermer">Fermer</button></div>
+    <dl class="meta">
+      <dt>Projet</dt><dd>${c.projet} · ${esc(PROJ[c.projet].nom)}</dd>
+      <dt>Lot</dt><dd>${esc(c.lot)}</dd>
+      <dt>Origine</dt><dd>${esc(c.origine)}</dd>
+      <dt>Signalé</dt><dd>${fmt(c.cree)} par ${who(c.auteur)}</dd>
+      <dt>Responsable</dt><dd>${esc(who(c.resp))}${isST(c.resp)?' <span class="tag">Externe · portail</span>':''}</dd>
+      <dt>Échéance</dt><dd class="${isLate(c)?'late':''}">${c.ech?fmt(c.ech):'·'}${isLate(c)?` · ${days(T0,c.ech)} j de retard${escal(c)?', escaladé à S. Gagnon':''}`:''}</dd>
+      ${c.statut==='fermee'&&c.fermePar?`<dt>Fermé</dt><dd>${fmt(c.fermeLe)} par ${who(c.fermePar)}</dd>`:''}
+    </dl>
+    <div class="photo">${c.photo?`<img src="data:${c.photo.slice(5)}" alt="Photo du constat">`:`Photo conservée dans ACC · <span class="mono">ouvrir dans ACC</span>`}</div>
+    <div><h3 style="margin-bottom:8px">Suivi</h3>
+      ${t.out.length?`<div class="actions">${t.out.map(([to,l,cls])=>`<button class="btn ${cls}" data-act="move" data-id="${c.id}" data-to="${to}">${l}</button>`).join('')}</div>`:''}
+      ${t.rule?`<div class="rule" style="margin-top:${t.out.length?'10px':'0'}">${t.rule}</div>`:''}
+      ${!t.out.length&&!t.rule&&c.statut==='fermee'?'<span class="muted">Action fermée.</span>':''}
+    </div>
+    ${c.resp?`<div><h3 style="margin-bottom:8px">Mesure immédiate</h3><input type="text" id="mi-${c.id}" data-f="mi" value="${esc(c.mi)}" placeholder="Ce qui a été fait sur-le-champ pour contenir le problème" style="width:100%"></div>`:''}
+    ${why?`<div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><h3>Recherche de cause</h3><div class="seg plain"><button data-act="cmode" data-m="5p" aria-pressed="${c.causeMode==='5p'}">5 pourquoi</button><button data-act="cmode" data-m="6m" aria-pressed="${c.causeMode==='6m'}">6M</button></div></div><div class="why">
+      ${c.causeMode==='5p'?c.causes.map((v,i)=>`<label for="why-${c.id}-${i}"><span>${i+1}</span><input type="text" id="why-${c.id}-${i}" data-why="${i}" value="${esc(v)}" placeholder="Pourquoi ?"></label>`).join('')
+        :SIXM.map((m,i)=>`<label for="six-${c.id}-${i}" style="grid-template-columns:104px minmax(0,1fr)"><span style="font-family:inherit">${m}</span><input type="text" id="six-${c.id}-${i}" data-six="${i}" value="${esc(c.six[i])}" placeholder="Cause possible"></label>`).join('')}
+    </div></div>`:''}
+    ${c.resp?`<div><h3 style="margin-bottom:8px">Compilation des coûts</h3><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <label class="ctl" style="flex-direction:column;align-items:flex-start" for="ch-${c.id}">Heures de reprise<input type="number" min="0" id="ch-${c.id}" data-cost="h" value="${c.cout.h}" style="width:110px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px"></label>
+      <label class="ctl" style="flex-direction:column;align-items:flex-start" for="cm-${c.id}">Matériaux ($)<input type="number" min="0" id="cm-${c.id}" data-cost="mat" value="${c.cout.mat}" style="width:110px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px"></label>
+      <label class="toggle" for="cr-${c.id}"><input type="checkbox" id="cr-${c.id}" data-cost="refact" ${c.cout.refact?'checked':''}> Refacturable${isST(c.resp)?' à '+esc(ST[c.resp].nom):''}</label></div>
+      <p style="margin:8px 0 0;font-size:13px">Total : <b class="mono" id="ct-${c.id}">${costTxt(c)}</b> <span class="muted">(taux moyen ${TAUX} $/h, paramétrable)</span></p></div>`:''}
+    <div><h3 style="margin-bottom:8px">Abonnés</h3><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${c.abonnes.map(k=>`<span class="tag" style="text-transform:none;letter-spacing:0;font-size:12px">${who(k)}<button data-act="abodel" data-k="${k}" aria-label="Retirer ${who(k)}" style="all:unset;cursor:pointer;margin-left:6px">×</button></span>`).join('')}
+      <select id="abo-add" aria-label="Ajouter un abonné"><option value="">+ Ajouter</option>${Object.keys(PEOPLE).filter(k=>!c.abonnes.includes(k)).map(k=>`<option value="${k}">${PEOPLE[k].nom}</option>`).join('')}</select></div>
+      <p class="muted" style="margin:6px 0 0;font-size:12px">Les abonnés reçoivent un avis à chaque changement d'étape.</p></div>
+    ${c.statut==='fermee'&&c.resp?`<div><h3 style="margin-bottom:8px">Évaluation de l'efficacité</h3>${c.eff?`<span class="pill ${c.eff==='ok'?'c-ok':'c-crit'}">${c.eff==='ok'?'Efficace':'Non efficace'}</span>`:`<p style="margin:0 0 8px;font-size:13px">Prévue le ${fmt(new Date(c.fermeLe.getTime()+30*DAY))} : le problème est-il revenu ?</p><div class="actions"><button class="btn" data-act="effok" data-id="${c.id}">Efficace</button><button class="btn" data-act="effko" data-id="${c.id}">Non efficace, rouvrir</button></div>`}</div>`:''}
+    <div><h3 style="margin-bottom:8px">Journal</h3><div class="journal">${c.journal.map(j=>`<div><span class="mono muted">${j.t}</span><span>${esc(j.txt)}</span></div>`).join('')}</div></div>
+    ${dev('Tables constat + action + cause. Contrainte serveur : action.ferme_par ≠ action.responsable. Champs ajoutés : mesure_immediate, cause_5p, cause_6m, cout (heures × taux + matériaux, refacturable), abonnes, efficacite (vérifiée 30 j après fermeture ; « non efficace » rouvre l\'action). Chaque transition écrit dans journal. Le sous-traitant dépose sa preuve via le portail ; un interne l\'enregistre ici.')}
+  </aside>`;
+}
+
+/* ---------- nouveau constat ---------- */
+let draftPhoto=null;
+function modal(){
+  const o=(obj,f)=>Object.keys(obj).map(k=>`<option value="${k}">${f(k)}</option>`).join('');
+  return `<div class="scrim m" data-act="closemodal"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Nouveau constat"><h2 style="font-size:19px">Nouveau constat ${S.mod==='q'?'qualité':'SST'}</h2>
+  <p class="muted" style="margin:0;font-size:13px">Pensé pour le téléphone : une photo, une phrase, le reste se complète au bureau.</p>
+  <form id="newf">
+    <label>Projet<select id="n-projet">${o(PROJ,k=>k+' '+PROJ[k].nom)}</select></label>
+    <label>Type<select id="n-type">${FAM[S.mod].map(k=>`<option value="${k}">${TYPES[k].l}</option>`).join('')}</select></label>
+    <label class="full">Ce que tu as vu<input type="text" id="n-titre" required placeholder="Ex. garde-corps manquant, cage d'escalier A"></label>
+    <label>Gravité<select id="n-grav">${o(GRAV,k=>GRAV[k].l)}</select></label>
+    <label>Responsable<select id="n-resp"><optgroup label="Sous-traitants">${o(ST,k=>ST[k].nom)}</optgroup><optgroup label="CG">${o(PEOPLE,k=>PEOPLE[k].nom+', '+PEOPLE[k].role)}</optgroup></select></label>
+    <label class="full">Photo<input type="file" id="n-photo" accept="image/*"></label>
+    <p class="muted full" style="margin:0;font-size:12px;grid-column:1/-1" id="n-ech">Échéance calculée : ${fmt(d(GRAV.mineure.delai))} (mineure, 7 jours)</p>
+    <div class="foot"><button type="button" class="btn" data-act="closemodal">Annuler</button><button type="submit" class="btn primary">Créer le constat</button></div>
+  </form></div>`;
+}
+
+function renderLayer(){
+  let h='';
+  if(S.open){const c=constats.find(x=>x.id===S.open);if(c)h+=drawer(c)}
+  if(S.modal)h+=modal();
+  if(S.evalST)h+=evalModal();
+  $('#layer').innerHTML=h;
+}
+
+/* ---------- actions ---------- */
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3200)}
+
+function newId(){return 'C-0'+(seq++)}
+function runSync(){
+  if(S.syncing)return;S.syncing=true;S.syncStep=-1;render();
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches, dt=reduce?0:550;
+  let i=0;const tick=()=>{S.syncStep=i;render();i++;if(i<4)setTimeout(tick,dt);else setTimeout(finish,dt)};
+  setTimeout(tick,dt);
+  function finish(){
+    let n=0;
+    pending.filter(f=>gabFam(f.gab)===S.mod).forEach(f=>{let made=0;
+      f.items.forEach(it=>{if(it[1])return;const m=MAP.find(x=>x.gab===f.gab&&x.champ===it[0]);if(!m)return;
+        const resp=it[2]||f.par;
+        constats.push(C({id:newId(),type:m.type,projet:f.projet,lot:it[2]?ST[it[2]].lot:'Général',grav:m.grav,titre:it[0]+' : non. '+(it[3]||''),
+          origine:'ACC Forms · '+f.gab,cree:d(0),auteur:f.par,resp,ech:d(GRAV[m.grav].delai),statut:'ouverte',
+          journal:[{t:fmt(d(0)),txt:'Créé automatiquement par la synchro ('+f.acc+')'},{t:fmt(d(0)),txt:'Rappel envoyé à '+who(resp)}]}));made++;n++});
+      if(f.gab==='Inspection SST hebdo')inspSST.faites++;
+      synced.unshift({acc:f.acc,gab:f.gab,projet:f.projet,par:f.par,heure:nowHM(),crees:made});
+    });
+    pending=pending.filter(f=>gabFam(f.gab)!==S.mod);S.syncing=false;render();toast(n+' constat(s) créé(s) et assigné(s).');
+  }
+}
+
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act]');if(!a)return;
+  const act=a.dataset.act;if(a.tagName==='A')e.preventDefault();
+  if(act==='nav')go(a.dataset.view);
+  else if(act==='open'){S.open=a.dataset.id;renderLayer()}
+  else if(act==='close'){S.open=null;renderLayer()}
+  else if(act==='move'){
+    const c=constats.find(x=>x.id===a.dataset.id),to=a.dataset.to,u=PEOPLE[S.role].nom;
+    const msg={encours:c.statut==='averifier'?'Preuve refusée, à reprendre':'Pris en charge',averifier:'Preuve de correction déposée',fermee:'Fermeture validée'}[to];
+    c.statut=to;c.journal.push({t:fmt(d(0)),txt:msg+' par '+u});
+    if(to==='fermee'){c.fermePar=S.role;c.fermeLe=d(0)}
+    render();toast(c.id+' : '+msg.toLowerCase()+'.');
+  }
+  else if(act==='sync')runSync();
+  else if(act==='ssttab'){S.sstTab=a.dataset.tab;render()}
+  else if(act==='mapfield'){MAP.push({gab:unknownField.gab,champ:unknownField.champ,nc:'Non',type:'sst',grav:'majeure',disc:'SST'});unknownField.open=false;render();toast('Champ relié. Les prochaines réponses « Non » créeront un écart SST majeur.')}
+  else if(act==='cmode'){const c=constats.find(x=>x.id===S.open);c.causeMode=a.dataset.m;renderLayer()}
+  else if(act==='effok'||act==='effko'){const c=constats.find(x=>x.id===a.dataset.id),u=PEOPLE[S.role].nom;
+    if(act==='effok'){c.eff='ok';c.journal.push({t:fmt(d(0)),txt:'Efficacité confirmée par '+u})}
+    else{c.statut='ouverte';c.eff=null;c.fermePar=null;c.ech=d(GRAV[c.grav].delai);c.journal.push({t:fmt(d(0)),txt:'Non efficace, action rouverte par '+u})}
+    render();toast(c.id+(act==='effok'?' : efficacité confirmée.':' rouvert.'))}
+  else if(act==='abodel'){const c=constats.find(x=>x.id===S.open);c.abonnes=c.abonnes.filter(k=>k!==a.dataset.k);renderLayer()}
+  else if(act==='evt'){S.evtOpen=a.dataset.id||null;render()}
+  else if(act==='comptab'){S.compTab=a.dataset.tab;render()}
+  else if(act==='eqdone'){const q=EQ.find(x=>x.id===a.dataset.id);q.dernier=d(0);q.prochain=d(q.freq);render();toast(q.id+' : fait aujourd\'hui, prochaine le '+fmt(q.prochain)+'.')}
+  else if(act==='eval'){S.evalST=a.dataset.k;renderLayer()}
+  else if(act==='closeeval'){S.evalST=null;renderLayer()}
+  else if(act==='theme'){const r=document.documentElement,dark=r.dataset.theme!=='dark';r.dataset.theme=dark?'dark':'light';a.textContent=dark?'Mode jour':'Mode nuit'}
+  else if(act==='new'){S.modal=true;draftPhoto=null;renderLayer();setTimeout(()=>$('#n-titre')?.focus(),30)}
+  else if(act==='closemodal'){S.modal=false;renderLayer()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(S.evalST){S.evalST=null;renderLayer()}else if(S.modal){S.modal=false;renderLayer()}else if(S.open){S.open=null;renderLayer()}}
+  if(e.key==='Enter'&&e.target.matches('tr[data-act="open"]')){S.open=e.target.dataset.id;renderLayer()}
+  if(e.key==='Enter'&&e.target.matches('tr[data-act="evt"]')){S.evtOpen=e.target.dataset.id;render()}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='role'){S.role=t.value;render();toast('Vue de '+PEOPLE[S.role].nom+', '+PEOPLE[S.role].role.toLowerCase())}
+  else if(t.id==='devmode')document.body.classList.toggle('dev-on',t.checked);
+  else if(t.id==='f-projet'){S.f.projet=t.value;render()}
+  else if(t.id==='f-type'){S.f.type=t.value;render()}
+  else if(t.id==='f-statut'){S.f.statut=t.value;render()}
+  else if(t.id==='f-retard'){S.f.retard=t.checked;render()}
+  else if(t.id==='abo-add'&&t.value){const c=constats.find(x=>x.id===S.open);c.abonnes.push(t.value);c.journal.push({t:fmt(d(0)),txt:who(t.value)+' ajouté aux abonnés'});renderLayer()}
+  else if(t.dataset.cost==='refact'){const c=constats.find(x=>x.id===S.open);c.cout.refact=t.checked;const el=document.getElementById('ct-'+c.id);if(el)el.textContent=costTxt(c)}
+  else if(t.dataset.map){MAP[+t.dataset.map].grav=t.value;toast('Gravité mise à jour pour « '+MAP[+t.dataset.map].champ+' ».')}
+  else if(t.id==='n-grav'){const g=GRAV[t.value];$('#n-ech').textContent='Échéance calculée : '+fmt(d(g.delai))+' ('+g.l.toLowerCase()+', '+g.delai+(g.delai>1?' jours':' jour')+')'}
+  else if(t.id==='n-photo'&&t.files[0]){const r=new FileReader();r.onload=()=>draftPhoto=r.result;r.readAsDataURL(t.files[0])}
+});
+document.addEventListener('input',e=>{
+  const t=e.target;if(!S.open)return;const c=constats.find(x=>x.id===S.open);if(!c)return;
+  if(t.dataset.why!=null)c.causes[+t.dataset.why]=t.value;
+  else if(t.dataset.six!=null)c.six[+t.dataset.six]=t.value;
+  else if(t.dataset.f)c[t.dataset.f]=t.value;
+  else if(t.dataset.cost==='h'||t.dataset.cost==='mat'){c.cout[t.dataset.cost]=Math.max(0,+t.value||0);const el=document.getElementById('ct-'+c.id);if(el)el.textContent=costTxt(c)}
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id==='evalf'){e.preventDefault();const k=S.evalST;const n=CRIT.map((_,i)=>+$('#ev-'+i).value);
+    EVALS[k]={date:d(0),moy:n.reduce((a,b)=>a+b,0)/n.length,par:S.role,com:$('#ev-com').value.trim()};S.evalST=null;render();toast('Évaluation enregistrée pour '+ST[k].nom+'.');return}
+  if(e.target.id!=='newf')return;e.preventDefault();
+  const g=$('#n-grav').value,resp=$('#n-resp').value,type=$('#n-type').value;
+  const c=C({id:newId(),type,projet:$('#n-projet').value,lot:isST(resp)?ST[resp].lot:'Général',grav:g,titre:$('#n-titre').value.trim(),
+    origine:'Saisie directe (mobile)',cree:d(0),auteur:S.role,resp:type==='obs'?null:resp,ech:type==='obs'?null:d(GRAV[g].delai),statut:type==='obs'?'fermee':'ouverte',photo:draftPhoto});
+  if(type==='obs'){c.fermePar=S.role;c.fermeLe=d(0)}
+  c.journal.push({t:fmt(d(0)),txt:'Créé par '+who(S.role)+' (saisie directe)'});
+  if(c.resp)c.journal.push({t:fmt(d(0)),txt:'Rappel envoyé à '+who(c.resp)});
+  constats.push(c);S.modal=false;S.open=c.id;render();toast(c.id+' créé.');
+});
+
+/* ---------- démarrage ---------- */
+document.documentElement.dataset.theme='light'; /* mode jour forcé par défaut (charte Somtech) */
+$('#role').innerHTML=ROLES.map(k=>`<option value="${k}">${PEOPLE[k].nom}, ${PEOPLE[k].role.toLowerCase()}</option>`).join('');
+(function(){const h=(location.hash||'').slice(1);if(views().some(v=>v.k===h))S.view=h})();
+render();
+</script>
+</body>
+</html>
